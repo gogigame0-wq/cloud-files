@@ -83,8 +83,21 @@ button {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    signOut 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import { 
+    getStorage, 
+    ref, 
+    uploadBytesResumable, 
+    getDownloadURL, 
+    listAll, 
+    deleteObject 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY", // 🔴 СМЕНИ ТОВА
@@ -101,8 +114,8 @@ const storage = getStorage(app);
 
 let user = null;
 
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
+const email = document.getElementById("email");
+const password = document.getElementById("password");
 const fileInput = document.getElementById("fileInput");
 const fileList = document.getElementById("fileList");
 const progressBar = document.getElementById("progressBar");
@@ -110,7 +123,7 @@ const progressBar = document.getElementById("progressBar");
 // REGISTER
 window.register = async function () {
     try {
-        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        await createUserWithEmailAndPassword(auth, email.value, password.value);
         alert("Регистриран!");
     } catch (err) {
         alert(err.message);
@@ -120,7 +133,7 @@ window.register = async function () {
 // LOGIN
 window.login = async function () {
     try {
-        const cred = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        const cred = await signInWithEmailAndPassword(auth, email.value, password.value);
         user = cred.user;
 
         document.getElementById("loginBox").style.display = "none";
