@@ -100,7 +100,27 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY", // 🔴 СМЕНИ ТОВА
+ // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAHp3KrUraJWJ-WlUtb1lAaQNllb5vixfs",
+  authDomain: "cloud-files-55f1f.firebaseapp.com",
+  projectId: "cloud-files-55f1f",
+  storageBucket: "cloud-files-55f1f.firebasestorage.app",
+  messagingSenderId: "169443354765",
+  appId: "1:169443354765:web:7989441810b544f8825ac4",
+  measurementId: "G-VS74E6Z947"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);, // 🔴 СМЕНИ ТОВА
   authDomain: "cloud-files-55f1f.firebaseapp.com",
   projectId: "cloud-files-55f1f",
   storageBucket: "cloud-files-55f1f.appspot.com",
