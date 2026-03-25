@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Files</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: url('Неозаглавен дизайн.png') no-repeat center center fixed;
+    background-size: cover;
+}
+
+.overlay {
+    min-height: 100vh;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    width: 360px;
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 25px;
+    color: white;
+}
+
+input, button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+}
+
+button {
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+}
+
+#dashboard { display: none; }
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.2);
+    padding: 8px;
+    border-radius: 8px;
+    margin-top: 6px;
+}
+</style>
+</head>
+
+<body>
+<div class="overlay">
+
+<div class="card" id="loginBox">
+    <h2>Вход / Регистрация</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Парола">
+    <button onclick="register()">Регистрация</button>
+    <button onclick="login()">Вход</button>
+</div>
+
+<div class="card" id="dashboard">
+    <h2>Файлове</h2>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Качи</button>
+    <div id="fileList"></div>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhP3KrUraJWJ-WlUtb1lAaQNllb5vixfs",
+  authDomain: "cloud-files-55f1f.firebaseapp.com",
+  projectId: "cloud-files-55f1f",
+  storageBucket: "cloud-files-55f1f.appspot.com",
+  messagingSenderId: "169443354765",
+  appId: "1:169443354765:web:7989441810b544f8825ac4"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const storage = getStorage(app);
+
+let user = null;
+
+// ЕЛЕМЕНТИ
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const fileInput = document.getElementById("fileInput");
+const fileList = document.getElementById("fileList");
+
+window.register = async function () {
+    try {
+        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        alert("Регистриран!");
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+window.login = async function () {
+    try {
+        const cred = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        user = cred.user;
+
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+
+        loadFiles();
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+window.uploadFile = async function () {
+    if (!user) return alert("Трябва да сте влезли!");
+
+    const file = fileInput.files[0];
+    if (!file) return alert("Изберете файл!");
+
+    try {
+        const storageRef = ref(storage, `${user.uid}/${file.name}`);
+        await uploadBytes(storageRef, file);
+
+        alert("Качено!");
+        loadFiles();
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+async function loadFiles() {
+    fileList.innerHTML = "";
+
+    try {
+        const listRef = ref(storage, user.uid);
+        const result = await listAll(listRef);
+
+        for (const item of result.items) {
+            const url = await getDownloadURL(item);
+
+            const div = document.createElement("div");
+            div.className = "file-item";
+
+            const name = document.createElement("span");
+            name.textContent = item.name;
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.textContent = "Изтегли";
+            link.target = "_blank";
+
+            div.appendChild(name);
+            div.appendChild(link);
+            fileList.appendChild(div);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+</script>
+
+</body>
+</html>
