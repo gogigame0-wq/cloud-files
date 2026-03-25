@@ -9,7 +9,7 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
-    background: url('Неозаглавен дизайн.png') no-repeat center center fixed;
+    background: url('bg.png') no-repeat center center fixed;
     background-size: cover;
 }
 
@@ -72,6 +72,10 @@ button {
     <h2>Файлове</h2>
     <input type="file" id="fileInput">
     <button onclick="uploadFile()">Качи</button>
+    <button onclick="logout()">Изход</button>
+
+    <progress id="progressBar" value="0" max="100" style="width:100%; margin-top:10px;"></progress>
+
     <div id="fileList"></div>
 </div>
 
@@ -79,11 +83,11 @@ button {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getStorage, ref, uploadBytes, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAhP3KrUraJWJ-WlUtb1lAaQNllb5vixfs",
+  apiKey: "YOUR_API_KEY", // 🔴 СМЕНИ ТОВА
   authDomain: "cloud-files-55f1f.firebaseapp.com",
   projectId: "cloud-files-55f1f",
   storageBucket: "cloud-files-55f1f.appspot.com",
@@ -97,12 +101,13 @@ const storage = getStorage(app);
 
 let user = null;
 
-// ЕЛЕМЕНТИ
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const fileInput = document.getElementById("fileInput");
 const fileList = document.getElementById("fileList");
+const progressBar = document.getElementById("progressBar");
 
+// REGISTER
 window.register = async function () {
     try {
         await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
@@ -112,6 +117,7 @@ window.register = async function () {
     }
 }
 
+// LOGIN
 window.login = async function () {
     try {
         const cred = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
@@ -126,50 +132,77 @@ window.login = async function () {
     }
 }
 
-window.uploadFile = async function () {
+// LOGOUT
+window.logout = async function () {
+    await signOut(auth);
+    user = null;
+
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("dashboard").style.display = "none";
+}
+
+// UPLOAD
+window.uploadFile = function () {
     if (!user) return alert("Трябва да сте влезли!");
 
     const file = fileInput.files[0];
     if (!file) return alert("Изберете файл!");
 
-    try {
-        const storageRef = ref(storage, `${user.uid}/${file.name}`);
-        await uploadBytes(storageRef, file);
+    const storageRef = ref(storage, `${user.uid}/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
-        alert("Качено!");
-        loadFiles();
-    } catch (err) {
-        alert(err.message);
-    }
+    uploadTask.on('state_changed',
+        (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            progressBar.value = progress;
+        },
+        (error) => {
+            alert(error.message);
+        },
+        () => {
+            progressBar.value = 0;
+            loadFiles();
+        }
+    );
 }
 
+// LOAD FILES
 async function loadFiles() {
     fileList.innerHTML = "";
 
-    try {
-        const listRef = ref(storage, user.uid);
-        const result = await listAll(listRef);
+    const listRef = ref(storage, user.uid);
+    const result = await listAll(listRef);
 
-        for (const item of result.items) {
-            const url = await getDownloadURL(item);
+    for (const item of result.items) {
+        const url = await getDownloadURL(item);
 
-            const div = document.createElement("div");
-            div.className = "file-item";
+        const div = document.createElement("div");
+        div.className = "file-item";
 
-            const name = document.createElement("span");
-            name.textContent = item.name;
+        const name = document.createElement("span");
+        name.textContent = item.name;
 
-            const link = document.createElement("a");
-            link.href = url;
-            link.textContent = "Изтегли";
-            link.target = "_blank";
+        const link = document.createElement("a");
+        link.href = url;
+        link.textContent = "Изтегли";
+        link.target = "_blank";
 
-            div.appendChild(name);
-            div.appendChild(link);
-            fileList.appendChild(div);
-        }
-    } catch (err) {
-        console.error(err);
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "🗑️";
+        delBtn.style.width = "50px";
+
+        delBtn.onclick = async () => {
+            if (confirm("Сигурен ли си?")) {
+                await deleteObject(item);
+                loadFiles();
+            }
+        };
+
+        div.appendChild(name);
+        div.appendChild(link);
+        div.appendChild(delBtn);
+
+        fileList.appendChild(div);
     }
 }
 </script>
